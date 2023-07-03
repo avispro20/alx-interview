@@ -20,5 +20,4 @@ def pascal_triangle(n):
             row.extend([sum(pair) for pair in zip(last_row, last_row[1:])])
             row.append(1)
         pascal_list.append(row)
-    return (pascal_list)
-
+    return pascal_list
