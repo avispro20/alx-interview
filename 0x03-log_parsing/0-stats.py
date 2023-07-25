@@ -20,7 +20,6 @@ line list = [<IP Address>, -, [<date>], "GET /projects/260 HTTP/1.1",
 <status code>, <file size>]
 """
 
-
 import sys
 
 # store the count of all status codes in a dictionary
@@ -32,15 +31,17 @@ count = 0  # keep count of the number lines counted
 
 try:
     for line in sys.stdin:
-        line_list = line.split(" ")
+        line_list = line.strip().split(" ")
 
         if len(line_list) > 4:
             status_code = line_list[-2]
-            file_size = int(line_list[-1])
+            try:
+                file_size = int(line_list[-1])
+            except ValueError:
+                file_size = 0
 
-            # check if the status code receive exists in the dictionary and
-            # increment its count
-            if status_code in status_codes_dict.keys():
+            # check if the status code received exists in the dictionary and increment its count
+            if status_code in status_codes_dict:
                 status_codes_dict[status_code] += 1
 
             # update total size
@@ -58,11 +59,11 @@ try:
                 if value != 0:
                     print('{}: {}'.format(key, value))
 
-except Exception as err:
-    pass
-
-finally:
+except KeyboardInterrupt:
+    sys.stderr.write("Keyboard interruption received. Exiting...\n")
+    sys.stderr.flush()
     print('File size: {}'.format(total_size))
     for key, value in sorted(status_codes_dict.items()):
         if value != 0:
             print('{}: {}'.format(key, value))
+    sys.exit(0)
