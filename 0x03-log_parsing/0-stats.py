@@ -20,49 +20,30 @@ line list = [<IP Address>, -, [<date>], "GET /projects/260 HTTP/1.1",
 <status code>, <file size>]
 """
 
-
 import sys
-import signal
 
-# Define global variables
-total_size = 0
-status_counts = {200: 0, 301: 0, 400: 0, 401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
-line_count = 0
+# Initialize the metrics
+total_file_size = 0
+status_code_counts = {200: 0, 301: 0, 400: 0, 401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
 
-def print_statistics():
-    global total_size, status_counts
-    print("Total file size:", total_size)
-    for status_code in sorted(status_counts.keys()):
-        if status_counts[status_code] > 0:
-            print(f"{status_code}: {status_counts[status_code]}")
-    print()
+# Read lines from stdin
+for line in sys.stdin:
+    # Split the line into a list
+    line_list = line.split()
 
-def signal_handler(sig, frame):
-    print_statistics()
-    sys.exit(0)
+    # Check if the line is in the correct format
+    if len(line_list) != 6:
+        continue
 
-signal.signal(signal.SIGINT, signal_handler)
+    # Get the status code
+    status_code = int(line_list[4])
 
-def process_line(line):
-    global total_size, status_counts, line_count
-    parts = line.split()
-    if len(parts) != 10:
-        return
+    # Update the metrics
+    total_file_size += int(line_list[5])
+    status_code_counts[status_code] += 1
 
-    ip_address, date, method, endpoint, http_version, status_code, file_size = parts[0], parts[3][1:], parts[5], parts[6], parts[7], parts[8], int(parts[9])
-
-    if status_code.isdigit():
-        status_code = int(status_code)
-        if status_code in status_counts:
-            status_counts[status_code] += 1
-
-    total_size += file_size
-    line_count += 1
-
-try:
-    for line in sys.stdin:
-        process_line(line)
-        if line_count % 10 == 0:
-            print_statistics()
-except KeyboardInterrupt:
-    print_statistics()
+    # Print the metrics every 10 lines
+    if len(status_code_counts) % 10 == 0:
+        print("Total file size:", total_file_size)
+        for status_code, count in status_code_counts.items():
+            print(status_code, ":", count)
